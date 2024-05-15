@@ -20,3 +20,6 @@ logs/
 # Ignore temporary files and directories
 *.tmp
 *.temp
+
+# Env files
+.env.local
