@@ -1,6 +1,5 @@
-import { Client } from 'pg';
 import { Buffer } from 'buffer';
-// import { fetch } from 'bun';
+import { Client } from 'pg';
 
 // Access environment variables
 const connectionUri = process.env.DASHBEERD_NEON_DB_URI_STAGING;
