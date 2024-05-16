@@ -1,5 +1,11 @@
 import { Buffer } from 'buffer';
+import { customAlphabet } from 'nanoid';
 import { Client } from 'pg';
+import allBeerIds from '../allBeerIds.json';
+import { write } from '../fs-utils.js';
+
+export const AZ09 = 'abcdefghijklmnopqrstuvwxyz0123456789'
+export const nanoid = customAlphabet(AZ09, 12)
 
 // Access environment variables
 const connectionUri = process.env.DASHBEERD_NEON_DB_URI_STAGING;
@@ -41,7 +47,9 @@ async function fetchAndInsertBeerDetails(beerId) {
         const response = await fetch(baseUrl, { headers, timeout: 10000 });  // Set timeout to 10 seconds
         if (response.ok) {
             const beer = await response.json();
+            const id = nanoid()
             const beerData = [
+                // id,
                 beer.id,
                 beer.object,
                 beer.name,
@@ -79,12 +87,35 @@ async function fetchAndInsertBeerDetails(beerId) {
     }
 }
 
-// Main execution flow
 async function main() {
-    const beerIds = await fetchBeerIds(100);
-    console.log('beer ids', beerIds)
+    // const beerIds = await fetchBeerIds(100000);
+
+    const res = await client.query(`SELECT id FROM catalog_beer.beer `)
+    const finishedIds = res.rows.map(row => row.id)
+
+    const allBeers = JSON.parse(allBeerIds)
+    console.log('all beer ids', allBeers)
+    // allBeers.forEach(async (beerId) => {
+    //   if (!finishedIds.includes(beerId)) {
+    //     console.log('fetching', beerId)
+    //     await fetchAndInsertBeerDetails(beerId);
+    //   }
+    // });
+    await Promise.all(allBeers.map(async (beerId) => {
+      if (!finishedIds.includes(beerId)) {
+          console.log('fetching', beerId)
+          await fetchAndInsertBeerDetails(beerId)
+      }
+  }))
+    // await write('beerIds.json', JSON.stringify(beerIds, null, 2))
+
+
+    // console.log('beer ids', allBeerIds)
+    // for (let i = 0; i < 100; i++) {
+      // console.log('beer ids', beerIds)
     // for (const beerId of beerIds) {
     //     await fetchAndInsertBeerDetails(beerId);
+    // }
     // }
     await client.end();
     console.log("All beer data inserted or updated successfully.");
