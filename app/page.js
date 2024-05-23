@@ -1,35 +1,45 @@
-import { db } from '@/utils/db'
+'use server'
+
+import { db } from '@/utils/db';
+import { BeerTable } from './BeerTable';
+
+export async function searchBeers(searchTerm, sort = 'beername', order = 'ASC') {
+  const validSortColumns = ['beername', 'brewername', 'beerstyle', 'beerabv', 'beeribu', 'website']
+  const validOrder = ['ASC', 'DESC']
+
+  // Ensure sort and order are valid
+  const sortColumn = validSortColumns.includes(sort.toLowerCase()) ? sort.toLowerCase() : 'beername'
+  const sortOrder = validOrder.includes(order.toUpperCase()) ? order.toUpperCase() : 'ASC'
+
+  const hasSearchTerm = searchTerm && searchTerm.length > 0
+  const params = hasSearchTerm ? [`%${searchTerm.toLowerCase()}%`] : []
+
+  try {
+    const { rows: beers } = await db.query(`
+      SELECT beer.beerid, beer.brewername, beer.beername, beer.beerstyle, beer.beerabv, beer.beeribu, beer.website
+      FROM catalog_beer.basicbeerdetails beer
+      ${hasSearchTerm ? `WHERE LOWER(beer.beername) LIKE $1` : ''}
+      ORDER BY ${sortColumn} ${sortOrder}
+      LIMIT 100
+    `, params)
+
+    return beers
+
+  } catch (error) {
+    console.error('Error searching beers:', error)
+    throw new Error('Error searching beers')
+  }
+}
+
 
 const Page = async () => {
-  const res = await db.query(`
-  SELECT beer.name, beer.style, beer.abv, beer.ibu, brewer.name as brewery_name
-  FROM catalog_beer.beer beer
-  JOIN catalog_beer.brewer brewer
-  ON beer.brewer_id::uuid = brewer.id
-  ORDER BY beer.name ASC
+  const { rows: beers } = await db.query(`
+  SELECT beer.beerid, beer.brewername, beer.beername, beer.beerstyle, beer.beerabv, beer.beeribu, beer.website
+  FROM catalog_beer.basicbeerdetails beer
+  ORDER BY beer.beername ASC
+  LIMIT 100
 `)
-  const beers = res.rows
 
-  return (
-    <div className='p-2'>
-      <h1 className='text-4xl font-bold p-2'>🍻 Beers!</h1>
-      <div className='hidden sm:grid sticky top-0 bg-white w-full grid-cols-1 sm:grid-cols-5 gap-2 border-b p-2'>
-        <p className='font-bold'>Name</p>
-        <p className='font-bold'>Brewery</p>
-        <p className='font-bold'>IBU</p>
-        <p className='font-bold'>ABV</p>
-        <p className='font-bold'>Style</p>
-      </div>
-      {beers.map(beer => (
-        <div className='w-full grid grid-cols-1 sm:grid-cols-5 gap-2 border-b p-2' key={beer.id}>
-          <p className='font-bold'>{beer.name}</p>
-          <p>{beer.brewery_name}</p>
-          <p>{beer.ibu}</p>
-          <p>{beer.abv}%</p>
-          <p>{beer.style}</p>
-        </div>
-      ))}
-    </div>
-  )
+  return <BeerTable beers={beers} />
 }
 export default Page

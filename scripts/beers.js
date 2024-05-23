@@ -88,35 +88,15 @@ async function fetchAndInsertBeerDetails(beerId) {
 }
 
 async function main() {
-    // const beerIds = await fetchBeerIds(100000);
-
     const res = await client.query(`SELECT id FROM catalog_beer.beer `)
     const finishedIds = res.rows.map(row => row.id)
 
     const allBeers = JSON.parse(allBeerIds)
-    console.log('all beer ids', allBeers)
-    // allBeers.forEach(async (beerId) => {
-    //   if (!finishedIds.includes(beerId)) {
-    //     console.log('fetching', beerId)
-    //     await fetchAndInsertBeerDetails(beerId);
-    //   }
-    // });
     await Promise.all(allBeers.map(async (beerId) => {
       if (!finishedIds.includes(beerId)) {
-          console.log('fetching', beerId)
           await fetchAndInsertBeerDetails(beerId)
       }
   }))
-    // await write('beerIds.json', JSON.stringify(beerIds, null, 2))
-
-
-    // console.log('beer ids', allBeerIds)
-    // for (let i = 0; i < 100; i++) {
-      // console.log('beer ids', beerIds)
-    // for (const beerId of beerIds) {
-    //     await fetchAndInsertBeerDetails(beerId);
-    // }
-    // }
     await client.end();
     console.log("All beer data inserted or updated successfully.");
 }
