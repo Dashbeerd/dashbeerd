@@ -2,8 +2,8 @@
   "name": "dashbeerd",
   "description": "A dashboard for beer data",
   "scripts": {
-    "dev": "bunx next dev --port 7001",
-    "build": "bunx next build",
+    "dev": "npx next dev --port 7001",
+    "build": "npx next build",
     "beers": "bun run scripts/beers.js"
   },
   "dependencies": {
